@@ -1,0 +1,813 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>tinySA Ultra Generator — WebSerial VERIFIED de12ba2</title>
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#081018;--panel:#111c28;--panel2:#0d1620;--line:#293b4f;
+  --txt:#edf5fc;--muted:#91a8bc;--blue:#69bfff;--green:#55d884;
+  --amber:#ffd166;--red:#ff6f6f;--purple:#bd9cff;
+}
+*{box-sizing:border-box}
+body{margin:0;background:#081018;color:var(--txt);font:14px/1.48 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+header{position:sticky;top:0;z-index:10;background:#081018ee;backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.top{max-width:1320px;margin:auto;padding:13px 18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.brand{font-size:19px;font-weight:800;margin-right:auto}
+.wrap{max-width:1320px;margin:auto;padding:18px 18px 40px}
+.badge{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);border-radius:999px;padding:6px 9px;color:var(--muted)}
+.dot{width:9px;height:9px;border-radius:50%;background:#667482}.dot.on{background:var(--green);box-shadow:0 0 9px #55d88488}.dot.rf{background:var(--red);box-shadow:0 0 9px #ff6f6f99}
+button,input,select,textarea{font:inherit}
+button{border:1px solid #3a5067;background:#1a2938;color:var(--txt);border-radius:9px;padding:9px 12px;font-weight:700;cursor:pointer}
+button:hover{background:#263b50}button:disabled{opacity:.42;cursor:not-allowed}
+.primary{background:#0d609f;border-color:#1f82cd}.good{background:#176a39;border-color:#2b9452}.danger{background:#792828;border-color:#ad4040}.purple{background:#4d3477;border-color:#7353a5}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}
+.tab.active{background:#173957;border-color:#4389be}
+.page{display:none}.page.active{display:block}
+.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:14px}
+.card{grid-column:span 6;background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:14px;padding:16px}
+.card.wide{grid-column:1/-1}.card.third{grid-column:span 4}
+@media(max-width:900px){.card,.card.third{grid-column:1/-1}}
+h2{font-size:16px;margin:0 0 12px}h3{font-size:13px;margin:14px 0 7px;color:#d1e7fa}
+.row{display:flex;align-items:end;gap:9px;flex-wrap:wrap;margin:9px 0}
+.field{display:flex;flex-direction:column;gap:4px}
+label,.hint{font-size:12px;color:var(--muted)}
+input,select{background:#070d14;color:var(--txt);border:1px solid #34495f;border-radius:9px;padding:9px 10px;outline:none}
+input:focus,select:focus{border-color:var(--blue)}
+input[type=number]{width:160px}
+.big{font:800 30px/1.1 ui-monospace,SFMono-Regular,Consolas,monospace;color:#cce9ff;margin:5px 0 12px}
+.notice{border-left:3px solid var(--amber);background:#282113;color:#efdfb4;padding:9px 11px;border-radius:7px;margin:9px 0}
+.notice.ok{border-color:var(--green);background:#10261a;color:#d0f1da}.notice.bad{border-color:var(--red);background:#2b1717;color:#ffd4d4}
+.mono{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;color:#b9ddff}
+.console{width:100%;height:330px;resize:vertical;background:#05090e;color:#dcecff;border:1px solid #293d52;border-radius:10px;padding:10px;font:12px/1.36 ui-monospace,SFMono-Regular,Consolas,monospace}
+.sep{height:1px;background:var(--line);margin:14px 0}
+.kv{display:grid;grid-template-columns:180px 1fr;gap:6px 12px}.kv div:nth-child(odd){color:var(--muted)}
+.chips{display:flex;gap:7px;flex-wrap:wrap}.chip{padding:7px 9px;font-size:12px}
+table{width:100%;border-collapse:collapse;font-size:12px}th,td{border-bottom:1px solid #243548;padding:8px;text-align:left;vertical-align:top}th{color:#abc1d4}
+.status{min-height:20px;color:#bad0e3}
+details{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:#0c151e}
+summary{cursor:pointer;font-weight:750}
+code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;color:#b9ddff}
+</style>
+</head>
+<body>
+<header>
+  <div class="top">
+    <div class="brand">tinySA Ultra · Generator WebSerial · VERIFIED de12ba2</div>
+    <span class="badge"><span id="connDot" class="dot"></span><span id="connText">Déconnecté</span></span>
+    <span class="badge"><span id="rfDot" class="dot"></span><span id="rfText">RF OFF</span></span>
+    <button id="connectBtn" class="primary">Connecter</button>
+    <button id="disconnectBtn" disabled>Déconnecter</button>
+    <button id="panicBtn" class="danger" disabled>RF OFF immédiat</button>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="notice ok">
+    Cible vérifiée : <b>tinySA ULTRA ZS405 · tinySA4_v1.4-199-gde12ba2</b>.
+    Cette version distingue les commandes réellement présentes dans ce commit des réglages de calibration/expert.
+  </div>
+
+  <nav class="tabs">
+    <button class="tab active" data-page="generator">Générateur</button>
+    <button class="tab" data-page="modulation">Modulation</button>
+    <button class="tab" data-page="sweep">Sweep natif</button>
+    <button class="tab" data-page="fsk">FSK / CFO Lab</button>
+    <button class="tab" data-page="diag">Diagnostic</button>
+    <button class="tab" data-page="console">Console</button>
+  </nav>
+
+  <section id="generator" class="page active">
+    <div class="grid">
+      <div class="card">
+        <h2>Mode et chemin RF</h2>
+        <div class="row">
+          <button id="modeOutput" class="primary conn">MODE OUTPUT</button>
+          <button id="safeInit" class="good conn">Initialisation sûre</button>
+        </div>
+        <div class="hint">
+          Commande correcte : <code>mode output</code>. Sur TinySA4, <code>mode low output</code> est seulement un alias du même mode.
+        </div>
+        <div class="sep"></div>
+        <div class="field">
+          <label>Chemin de sortie Ultra</label>
+          <select id="pathSelect">
+            <option value="mixer" selected>Highest accuracy — output mixer — max 5.4 GHz</option>
+            <option value="normal">Cleanest signal — output normal — max 4.4 GHz</option>
+          </select>
+        </div>
+        <div class="row">
+          <button id="applyPath" class="conn">Appliquer chemin</button>
+        </div>
+        <div class="notice">
+          À 2,4 GHz, <b>Highest accuracy = <code>output mixer</code></b>. Cleanest = <code>output normal</code>.
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Sortie</h2>
+        <div class="row">
+          <button id="rfOn" class="good conn">RF ON</button>
+          <button id="rfOff" class="danger conn">RF OFF</button>
+        </div>
+        <div class="kv">
+          <div>Mode</div><div>OUTPUT / M_GENLOW</div>
+          <div>Chemin demandé</div><div id="statePath">mixer / Highest accuracy</div>
+          <div>RF</div><div id="stateRF">OFF</div>
+          <div>Modulation</div><div id="stateMod">OFF</div>
+        </div>
+        <div class="notice bad">
+          L'initialisation sûre force d'abord RF OFF, puis entre en mode output, puis force RF OFF une seconde fois.
+        </div>
+      </div>
+
+      <div class="card wide">
+        <h2>Fréquence CW</h2>
+        <div id="bigFreq" class="big">2412.000000 MHz</div>
+        <div class="row">
+          <div class="field">
+            <label>Fréquence (MHz)</label>
+            <input id="cwMHz" type="number" value="2412.000000" min="0.1" max="5400" step="0.001">
+          </div>
+          <button id="applyCW" class="primary conn">Appliquer CW</button>
+          <button id="querySweep" class="conn">Lire start / stop / points</button>
+        </div>
+        <div class="hint">
+          Contrôle principal : <code>sweep cw &lt;Hz&gt;</code>. La commande <code>freq &lt;Hz&gt;</code> est laissée au panneau Diagnostic car elle pause le sweep et agit directement.
+        </div>
+        <div class="chips" style="margin-top:10px">
+          <button class="chip delta conn" data-khz="-100">−100 kHz</button>
+          <button class="chip delta conn" data-khz="-50">−50 kHz</button>
+          <button class="chip delta conn" data-khz="-20">−20 kHz</button>
+          <button class="chip delta conn" data-khz="-10">−10 kHz</button>
+          <button class="chip delta conn" data-khz="-1">−1 kHz</button>
+          <button class="chip delta conn" data-khz="1">+1 kHz</button>
+          <button class="chip delta conn" data-khz="10">+10 kHz</button>
+          <button class="chip delta conn" data-khz="20">+20 kHz</button>
+          <button class="chip delta conn" data-khz="50">+50 kHz</button>
+          <button class="chip delta conn" data-khz="100">+100 kHz</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Niveau RF</h2>
+        <div class="row">
+          <div class="field">
+            <label>Niveau demandé (dBm)</label>
+            <input id="levelDbm" type="number" value="-70" min="-115" max="-18.5" step="0.5">
+          </div>
+          <button id="applyLevel" class="conn">Appliquer</button>
+        </div>
+        <div class="chips">
+          <button class="chip lvl conn" data-level="-110">−110</button>
+          <button class="chip lvl conn" data-level="-90">−90</button>
+          <button class="chip lvl conn" data-level="-70">−70</button>
+          <button class="chip lvl conn" data-level="-50">−50</button>
+          <button class="chip lvl conn" data-level="-30">−30</button>
+          <button class="chip lvl conn" data-level="-20">−20</button>
+        </div>
+        <div class="hint" style="margin-top:8px">
+          Le cœur TinySA4 de ce commit borne M_GENLOW à environ −115…−18.5 dBm, plus l'offset de calibration de sortie éventuel.
+          Le texte d'aide <code>level -76..-6</code> dans le shell est ancien et ne correspond pas aux constantes TinySA4 de ce build.
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>External gain</h2>
+        <div class="row">
+          <div class="field">
+            <label>Correction externe (dB)</label>
+            <input id="extGain" type="number" value="0" min="-100" max="100" step="0.1">
+          </div>
+          <button id="applyExtGain" class="conn">Appliquer</button>
+        </div>
+        <div class="hint">
+          Commande exacte : <code>ext_gain -100.0..+100.0</code>. C'est une correction d'affichage/référence ; ce n'est pas un atténuateur RF supplémentaire.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="modulation" class="page">
+    <div class="grid">
+      <div class="card">
+        <h2>Type</h2>
+        <div class="row">
+          <button id="modOff" class="conn">NONE / OFF</button>
+          <button id="modAM" class="purple conn">AM</button>
+          <button id="modFM" class="purple conn">FM</button>
+        </div>
+        <label style="display:flex;gap:8px;align-items:center;margin-top:10px">
+          <input id="autoMixerFM" type="checkbox" checked style="width:auto">
+          Forcer <code>output mixer</code> avant FM au-dessus de 1.13 GHz
+        </label>
+        <div class="notice">
+          L'UI officielle force <code>SPAN=0</code> et <code>LEVEL CHANGE=0</code> lorsqu'on active une modulation.
+          Cette application reproduit ce comportement avant AM/FM.
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Fréquence de modulation</h2>
+        <div class="row">
+          <div class="field">
+            <label>Hz (UI de ce build : 1…3500 Hz)</label>
+            <input id="modFreq" type="number" value="1000" min="1" max="3500" step="1">
+          </div>
+          <button id="applyModFreq" class="conn">Envoyer modulation freq</button>
+        </div>
+        <div class="hint">
+          Le setter interne accepte jusqu'à 10 kHz en général, mais limite FM à 3.5 kHz. L'écran du build indique 1 Hz…3.5 kHz.
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>AM depth</h2>
+        <div class="row">
+          <div class="field">
+            <label>Profondeur (%)</label>
+            <input id="amDepth" type="number" value="50" min="0" max="100" step="1">
+          </div>
+          <button id="applyDepth" class="conn">Envoyer depth</button>
+        </div>
+        <div class="hint">Commande : <code>modulation depth &lt;0..100&gt;</code>.</div>
+      </div>
+
+      <div class="card">
+        <h2>FM deviation</h2>
+        <div class="row">
+          <div class="field">
+            <label>Déviation (kHz)</label>
+            <input id="fmDevKHz" type="number" value="50" min="1" max="300" step="0.1">
+          </div>
+          <button id="applyDeviation" class="conn">Envoyer deviation</button>
+        </div>
+        <div class="hint">
+          Le shell attend des <b>Hz</b> : 50 kHz devient <code>modulation deviation 50000</code>.
+          Le firmware stocke la valeur avec une granularité de 100 Hz.
+        </div>
+      </div>
+
+      <div class="card wide">
+        <h2>Profils complets</h2>
+        <div class="row">
+          <button id="applyAMProfile" class="good conn">Appliquer AM complet</button>
+          <button id="applyFMProfile" class="good conn">Appliquer FM complet</button>
+          <button id="applyNoneProfile" class="conn">Couper modulation</button>
+        </div>
+        <div id="modStatus" class="status"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="sweep" class="page">
+    <div class="grid">
+      <div class="card wide">
+        <h2>Sweep natif — fréquence</h2>
+        <div class="row">
+          <div class="field"><label>Start (MHz)</label><input id="swStart" type="number" value="2411.900" min="0" max="5400" step="0.001"></div>
+          <div class="field"><label>Stop (MHz)</label><input id="swStop" type="number" value="2412.100" min="0" max="5400" step="0.001"></div>
+          <div class="field">
+            <label>Points</label>
+            <select id="swPoints">
+              <option>25</option><option>50</option><option selected>100</option><option>200</option><option>290</option><option>450</option>
+            </select>
+          </div>
+          <button id="applyNativeSweep" class="primary conn">Configurer</button>
+        </div>
+        <div class="hint">
+          Envoie <code>sweep START_HZ STOP_HZ POINTS</code>. L'Ultra propose jusqu'à 450 points dans l'UI.
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Sweep — centre / span</h2>
+        <div class="row">
+          <div class="field"><label>Centre (MHz)</label><input id="swCenter" type="number" value="2412.000" step="0.001"></div>
+          <button id="applyCenter" class="conn">sweep center</button>
+        </div>
+        <div class="row">
+          <div class="field"><label>Span (MHz)</label><input id="swSpan" type="number" value="0.200" min="0" step="0.001"></div>
+          <button id="applySpan" class="conn">sweep span</button>
+        </div>
+        <div class="hint">Configurer un span non nul coupe d'abord la modulation dans cette application, comme le fait l'UI officielle.</div>
+      </div>
+
+      <div class="card">
+        <h2>Temps / niveau / précision</h2>
+        <div class="row">
+          <div class="field"><label>Sweeptime (s)</label><input id="sweepTime" type="number" value="1" min="0.003" max="60" step="0.001"></div>
+          <button id="applySweepTime" class="conn">Appliquer</button>
+        </div>
+        <div class="row">
+          <div class="field"><label>Level change (dB)</label><input id="levelChange" type="number" value="0" min="-90" max="90" step="0.1"></div>
+          <button id="applyLevelChange" class="conn">Appliquer</button>
+        </div>
+        <div class="row">
+          <select id="sweepAccuracy">
+            <option value="normal" selected>NORMAL</option>
+            <option value="precise">PRECISE</option>
+            <option value="fast">FAST</option>
+            <option value="noise">NOISE</option>
+          </select>
+          <button id="applyAccuracy" class="conn">Appliquer précision</button>
+        </div>
+        <div class="hint">
+          Le shell de ce commit annonce <code>sweeptime 0.003..60</code>, même si le texte de l'UI mentionne jusqu'à 600 s.
+        </div>
+      </div>
+
+      <div class="card wide">
+        <h2>Exécution</h2>
+        <div class="row">
+          <button id="sweepGo" class="good conn">SWEEP GO</button>
+          <button id="sweepAbort" class="danger conn">SWEEP ABORT</button>
+          <button id="sweepQuery" class="conn">Lire sweep</button>
+          <button id="sweeptimeQuery" class="conn">Lire sweeptime</button>
+          <button id="statusQuery" class="conn">Status</button>
+        </div>
+        <div class="hint">
+          Commandes natives : <code>sweep normal|precise|fast|noise|go|abort</code>.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="fsk" class="page">
+    <div class="grid">
+      <div class="card">
+        <h2>Deux tons manuels</h2>
+        <div class="row">
+          <div class="field"><label>F0 (MHz)</label><input id="f0" type="number" value="2411.950000" step="0.001"></div>
+          <div class="field"><label>F1 (MHz)</label><input id="f1" type="number" value="2412.050000" step="0.001"></div>
+        </div>
+        <div class="row">
+          <button id="sendF0" class="primary conn">F0</button>
+          <button id="sendF1" class="primary conn">F1</button>
+          <button id="sendFC" class="conn">Centre</button>
+        </div>
+        <div class="hint">Utilise <code>sweep cw</code>, donc la configuration du générateur reste cohérente avec l'UI.</div>
+      </div>
+
+      <div class="card">
+        <h2>Motif lent via USB</h2>
+        <div class="row">
+          <div class="field"><label>Motif</label><input id="pattern" value="01010101" style="width:230px"></div>
+          <div class="field"><label>Dwell/symbole (ms)</label><input id="bitDwell" type="number" value="500" min="120" max="60000" step="10"></div>
+          <div class="field"><label>Symboles</label><input id="bitCount" type="number" value="32" min="1" max="10000" step="1"></div>
+        </div>
+        <div class="row">
+          <button id="runPattern" class="good conn">Démarrer</button>
+          <button id="stopPattern" class="danger">Stop</button>
+        </div>
+        <div id="patternStatus" class="status"></div>
+        <div class="notice">Ce mode sert au test CFO lent. WebSerial n'est pas un générateur FSK à timing précis.</div>
+      </div>
+
+      <div class="card wide">
+        <h2>Séquence CFO</h2>
+        <div class="row">
+          <div class="field"><label>Centre (MHz)</label><input id="cfoCenter" type="number" value="2412.000000" step="0.001"></div>
+          <div class="field"><label>Offsets (kHz)</label><input id="cfoOffsets" value="-100,-50,-20,0,20,50,100" style="width:340px"></div>
+          <div class="field"><label>Dwell (ms)</label><input id="cfoDwell" type="number" value="1000" min="120" step="50"></div>
+          <button id="runCfo" class="good conn">Lancer</button>
+          <button id="stopCfo" class="danger">Stop</button>
+        </div>
+        <div id="cfoStatus" class="status"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="diag" class="page">
+    <div class="grid">
+      <div class="card wide">
+        <h2>Audit des commandes liées au générateur</h2>
+        <table>
+          <thead><tr><th>Fonction</th><th>Commande exacte</th><th>Remarque vérifiée</th></tr></thead>
+          <tbody>
+            <tr><td>Mode générateur</td><td><code>mode output</code></td><td><code>mode low output</code> est un alias sur TinySA4.</td></tr>
+            <tr><td>RF</td><td><code>output on|off</code></td><td>Mute/unmute.</td></tr>
+            <tr><td>Chemin</td><td><code>output normal|mixer</code></td><td>normal = Cleanest ; mixer = Highest accuracy.</td></tr>
+            <tr><td>Fréquence CW</td><td><code>sweep cw Hz</code></td><td>Correspond au modèle CW/zero-span de l'UI.</td></tr>
+            <tr><td>Fréquence directe</td><td><code>freq Hz</code></td><td>Pause le sweep puis appelle directement le réglage de fréquence.</td></tr>
+            <tr><td>Niveau</td><td><code>level dBm</code></td><td>Le core TinySA4 borne M_GENLOW à env. −115…−18.5 dBm + calibration.</td></tr>
+            <tr><td>Gain externe</td><td><code>ext_gain dB</code></td><td>−100…+100.</td></tr>
+            <tr><td>Modulation</td><td><code>modulation off|am|fm</code></td><td>Le shell seul ne coupe pas span/levelchange ; l'UI, oui.</td></tr>
+            <tr><td>Mod freq</td><td><code>modulation freq Hz</code></td><td>FM plafonnée à 3500 Hz par le setter si FM déjà active.</td></tr>
+            <tr><td>AM depth</td><td><code>modulation depth N</code></td><td>UI : 0…100 %.</td></tr>
+            <tr><td>FM deviation</td><td><code>modulation deviation Hz</code></td><td>UI : 1…300 kHz ; stockage /100.</td></tr>
+            <tr><td>Sweep fréquences</td><td><code>sweep START [STOP] [POINTS]</code></td><td>Ou start/stop/center/span/cw.</td></tr>
+            <tr><td>Sweep précision</td><td><code>sweep normal|precise|fast|noise</code></td><td>Réglage du step delay.</td></tr>
+            <tr><td>Sweep run</td><td><code>sweep go|abort</code></td><td>Active/désactive <code>setting.sweep</code>.</td></tr>
+            <tr><td>Sweep time</td><td><code>sweeptime seconds</code></td><td>Help shell : 0.003…60 s.</td></tr>
+            <tr><td>Level sweep</td><td><code>levelchange dB</code></td><td>TinySA4 : −90…+90 dB.</td></tr>
+            <tr><td>CAL output</td><td><code>caloutput off|30|15|10|4|3|2|1</code></td><td>Sortie CAL de référence, pas la RF principale.</td></tr>
+            <tr><td>Référence 30 MHz</td><td><code>actual_freq</code></td><td><b>Calibration</b>, pas lecture de la fréquence RF.</td></tr>
+            <tr><td>Correction fréquence</td><td><code>freq_corr</code></td><td>Calibration en ppb, pas réglage RF courant.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <h2>Sonde non destructive</h2>
+        <div class="row">
+          <button id="probe" class="primary conn">Sonder syntaxes</button>
+          <button id="info" class="conn">Info + version</button>
+          <button id="help" class="conn">HELP</button>
+        </div>
+        <div class="hint">
+          La sonde demande uniquement des usages/états ; elle n'utilise pas <code>levelchange ?</code> car ce firmware l'interpréterait comme une valeur 0.
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Commande freq directe</h2>
+        <div class="row">
+          <div class="field"><label>MHz</label><input id="directFreqMHz" type="number" value="2412.000000" step="0.001"></div>
+          <button id="directFreq" class="conn">freq &lt;Hz&gt;</button>
+        </div>
+        <div class="notice">Cette commande appelle <code>pause_sweep()</code>. Utilise plutôt CW dans l'onglet Générateur pour le fonctionnement normal.</div>
+      </div>
+
+      <div class="card">
+        <h2>Référence CAL</h2>
+        <div class="row">
+          <select id="calValue">
+            <option value="off">OFF</option><option value="30">30 MHz</option><option value="15">15 MHz</option>
+            <option value="10">10 MHz</option><option value="4">4 MHz</option><option value="3">3 MHz</option>
+            <option value="2">2 MHz</option><option value="1">1 MHz</option>
+          </select>
+          <button id="applyCal" class="conn">caloutput</button>
+        </div>
+        <div class="hint">Connecteur CAL uniquement.</div>
+      </div>
+
+      <div class="card">
+        <h2>Calibration fréquence — lecture seulement</h2>
+        <div class="row">
+          <button id="readActualFreq" class="conn">Lire actual_freq</button>
+          <button id="readFreqCorr" class="conn">Lire freq_corr</button>
+        </div>
+        <div class="notice bad">
+          <code>actual_freq</code> représente la référence 30 MHz mise à l'échelle dans le firmware ; ce n'est pas un fréquencemètre RF.
+          Les écritures de calibration sont volontairement absentes de cette interface.
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Presets appareil</h2>
+        <div class="row">
+          <select id="presetSlot"><option>0</option><option>1</option><option>2</option><option>3</option><option>4</option></select>
+          <button id="savePreset" class="conn">save slot</button>
+          <button id="recallPreset" class="conn">recall slot</button>
+        </div>
+        <div class="hint">Écrit/lit les zones de preset du tinySA.</div>
+      </div>
+
+      <div class="card wide">
+        <details>
+          <summary>Pourquoi je n'expose plus « ultra auto/on/off » comme option du générateur</summary>
+          <p>
+            La commande <code>ultra off|on|auto|start|harm</code> agit sur la configuration Ultra globale
+            (<code>config.ultra</code>, seuils et harmoniques). Ce n'est pas le sélecteur Cleanest/Highest Accuracy
+            de la sortie générateur. Le vrai sélecteur de sortie est <code>output normal|mixer</code>.
+          </p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <section id="console" class="page">
+    <div class="grid">
+      <div class="card wide">
+        <h2>Console brute</h2>
+        <textarea id="log" class="console" readonly spellcheck="false"></textarea>
+        <div class="row">
+          <input id="manual" placeholder="Commande tinySA…" style="flex:1;min-width:260px">
+          <button id="sendManual" class="conn">Envoyer</button>
+          <button id="clearLog">Effacer</button>
+          <button id="exportLog">Exporter .txt</button>
+        </div>
+        <div class="hint">Chaque commande est terminée par CR (<code>\r</code>).</div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+(() => {
+"use strict";
+
+let port=null, reader=null, keepReading=false;
+let queue=Promise.resolve();
+let rf=false, patternStop=false, cfoStop=false;
+
+const $=id=>document.getElementById(id);
+const enc=new TextEncoder(), dec=new TextDecoder();
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const now=()=>new Date().toLocaleTimeString("fr-CA",{hour12:false});
+
+function log(s,p=""){
+  const e=$("log");
+  e.value+=(p?`[${now()}] ${p}`:"")+s;
+  e.scrollTop=e.scrollHeight;
+}
+function n(id){
+  const v=Number($(id).value);
+  if(!Number.isFinite(v)) throw new Error(`Valeur invalide: ${id}`);
+  return v;
+}
+function hz(mhz){return Math.round(Number(mhz)*1e6);}
+function clamp(v,a,b){return Math.min(b,Math.max(a,v));}
+
+function setConnected(v){
+  $("connDot").classList.toggle("on",v);
+  $("connText").textContent=v?"Connecté":"Déconnecté";
+  $("connectBtn").disabled=v;
+  $("disconnectBtn").disabled=!v;
+  $("panicBtn").disabled=!v;
+  document.querySelectorAll(".conn").forEach(x=>x.disabled=!v);
+}
+function setRF(v){
+  rf=v;
+  $("rfDot").classList.toggle("rf",v);
+  $("rfText").textContent=v?"RF ON":"RF OFF";
+  $("stateRF").textContent=v?"ON":"OFF";
+}
+function setCWUI(mhz){
+  $("cwMHz").value=Number(mhz).toFixed(6);
+  $("bigFreq").textContent=`${Number(mhz).toFixed(6)} MHz`;
+}
+function setPathUI(p){
+  $("statePath").textContent=p==="mixer"?"mixer / Highest accuracy":"normal / Cleanest";
+}
+function setModUI(m){
+  $("stateMod").textContent=m.toUpperCase();
+}
+
+async function writeNow(cmd){
+  if(!port?.writable) throw new Error("Port non connecté");
+  const c=String(cmd).trim();
+  if(!c)return;
+  log(c+"\n","TX > ");
+  const w=port.writable.getWriter();
+  try{await w.write(enc.encode(c+"\r"));}finally{w.releaseLock();}
+  await sleep(70);
+}
+function send(cmd){
+  queue=queue.then(()=>writeNow(cmd)).catch(e=>log(e.message+"\n","ERREUR: "));
+  return queue;
+}
+async function sendMany(cmds){for(const c of cmds)await send(c);}
+
+async function readLoop(){
+  keepReading=true;
+  while(port?.readable && keepReading){
+    reader=port.readable.getReader();
+    try{
+      while(keepReading){
+        const {value,done}=await reader.read();
+        if(done)break;
+        if(value)log(dec.decode(value,{stream:true}));
+      }
+    }catch(e){if(keepReading)log(e.message+"\n","RX ERREUR: ");}
+    finally{try{reader.releaseLock();}catch{} reader=null;}
+  }
+}
+
+async function connect(){
+  if(!("serial" in navigator)){alert("Web Serial indisponible. Utilise Chrome/Edge sous HTTPS ou localhost.");return;}
+  try{
+    port=await navigator.serial.requestPort();
+    await port.open({baudRate:115200,dataBits:8,stopBits:1,parity:"none",flowControl:"none"});
+    setConnected(true);setRF(false);
+    log("Port ouvert.\n","APP: ");
+    readLoop();
+    await sleep(100);
+    await sendMany(["output off","info","version"]);
+  }catch(e){
+    port=null;setConnected(false);log(e.message+"\n","CONNEXION: ");
+  }
+}
+async function disconnect(){
+  patternStop=cfoStop=true;
+  try{
+    if(port?.writable){try{await writeNow("output off");}catch{}}
+    setRF(false);keepReading=false;
+    if(reader){try{await reader.cancel();}catch{}}
+    await sleep(30);
+    if(port){try{await port.close();}catch{}}
+  }finally{
+    port=null;setConnected(false);log("Port fermé.\n","APP: ");
+  }
+}
+
+async function applyPath(){
+  const p=$("pathSelect").value;
+  await send(`output ${p}`);
+  setPathUI(p);
+}
+async function applyCW(mhz=n("cwMHz")){
+  setCWUI(mhz);
+  await send(`sweep cw ${hz(mhz)}`);
+}
+async function applyLevel(v=n("levelDbm")){
+  v=clamp(v,-115,-18.5);
+  $("levelDbm").value=v;
+  await send(`level ${v}`);
+}
+async function prepareMod(type){
+  await sendMany(["sweep span 0","levelchange 0"]);
+  if(type==="fm" && $("autoMixerFM").checked && n("cwMHz")>=1130){
+    $("pathSelect").value="mixer";
+    await applyPath();
+  }
+  await send(`modulation ${type}`);
+  setModUI(type);
+}
+
+document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+  document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));
+  b.classList.add("active");$(b.dataset.page).classList.add("active");
+});
+
+$("connectBtn").onclick=connect;
+$("disconnectBtn").onclick=disconnect;
+$("panicBtn").onclick=async()=>{patternStop=cfoStop=true;await send("output off");setRF(false);};
+
+$("modeOutput").onclick=()=>send("mode output");
+$("safeInit").onclick=async()=>{
+  const p=$("pathSelect").value,f=n("cwMHz"),l=clamp(n("levelDbm"),-115,-18.5);
+  setRF(false);
+  await sendMany([
+    "output off",
+    "mode output",
+    "output off",
+    `output ${p}`,
+    "modulation off",
+    "levelchange 0",
+    `sweep cw ${hz(f)}`,
+    `level ${l}`
+  ]);
+  setPathUI(p);setCWUI(f);setModUI("off");
+  log("Initialisation sûre terminée; RF reste OFF.\n","APP: ");
+};
+$("applyPath").onclick=applyPath;
+$("rfOn").onclick=async()=>{await send("output on");setRF(true);};
+$("rfOff").onclick=async()=>{await send("output off");setRF(false);};
+$("applyCW").onclick=()=>applyCW();
+$("querySweep").onclick=()=>send("sweep");
+$("applyLevel").onclick=()=>applyLevel();
+$("applyExtGain").onclick=()=>send(`ext_gain ${clamp(n("extGain"),-100,100)}`);
+
+$("cwMHz").oninput=()=>{
+  const v=Number($("cwMHz").value);
+  if(Number.isFinite(v))$("bigFreq").textContent=`${v.toFixed(6)} MHz`;
+};
+document.querySelectorAll(".delta").forEach(b=>b.onclick=()=>applyCW(n("cwMHz")+Number(b.dataset.khz)/1000));
+document.querySelectorAll(".lvl").forEach(b=>b.onclick=()=>applyLevel(Number(b.dataset.level)));
+
+$("modOff").onclick=async()=>{await send("modulation off");setModUI("off");$("modStatus").textContent="Modulation OFF";};
+$("modAM").onclick=async()=>{await prepareMod("am");$("modStatus").textContent="AM activée, span et level sweep forcés à 0.";};
+$("modFM").onclick=async()=>{await prepareMod("fm");$("modStatus").textContent="FM activée, span et level sweep forcés à 0.";};
+
+$("applyModFreq").onclick=()=>send(`modulation freq ${Math.round(clamp(n("modFreq"),1,3500))}`);
+$("applyDepth").onclick=()=>send(`modulation depth ${Math.round(clamp(n("amDepth"),0,100))}`);
+$("applyDeviation").onclick=()=>{
+  const khz=clamp(n("fmDevKHz"),1,300);
+  return send(`modulation deviation ${Math.round(khz*1000)}`);
+};
+$("applyAMProfile").onclick=async()=>{
+  const f=Math.round(clamp(n("modFreq"),1,3500));
+  const d=Math.round(clamp(n("amDepth"),0,100));
+  await prepareMod("am");
+  await sendMany([`modulation freq ${f}`,`modulation depth ${d}`]);
+  $("modStatus").textContent=`AM: ${f} Hz, depth ${d} %.`;
+};
+$("applyFMProfile").onclick=async()=>{
+  const f=Math.round(clamp(n("modFreq"),1,3500));
+  const dev=Math.round(clamp(n("fmDevKHz"),1,300)*1000);
+  await prepareMod("fm");
+  await sendMany([`modulation freq ${f}`,`modulation deviation ${dev}`]);
+  $("modStatus").textContent=`FM: ${f} Hz, déviation ${(dev/1000).toFixed(1)} kHz.`;
+};
+$("applyNoneProfile").onclick=$("modOff").onclick;
+
+$("applyNativeSweep").onclick=async()=>{
+  const a=n("swStart"),b=n("swStop"),pts=Math.round(Number($("swPoints").value));
+  if(b<a){alert("Stop doit être >= Start.");return;}
+  await send("modulation off");setModUI("off");
+  await send(`sweep ${hz(a)} ${hz(b)} ${pts}`);
+};
+$("applyCenter").onclick=()=>send(`sweep center ${hz(n("swCenter"))}`);
+$("applySpan").onclick=async()=>{
+  const s=Math.max(0,n("swSpan"));
+  if(s>0){await send("modulation off");setModUI("off");}
+  await send(`sweep span ${hz(s)}`);
+};
+$("applySweepTime").onclick=()=>send(`sweeptime ${clamp(n("sweepTime"),0.003,60)}`);
+$("applyLevelChange").onclick=async()=>{
+  const v=clamp(n("levelChange"),-90,90);
+  if(v!==0){await send("modulation off");setModUI("off");}
+  await send(`levelchange ${v}`);
+};
+$("applyAccuracy").onclick=()=>send(`sweep ${$("sweepAccuracy").value}`);
+$("sweepGo").onclick=()=>send("sweep go");
+$("sweepAbort").onclick=()=>send("sweep abort");
+$("sweepQuery").onclick=()=>send("sweep");
+$("sweeptimeQuery").onclick=()=>send("sweeptime ?");
+$("statusQuery").onclick=()=>send("status");
+
+async function setTone(bit){
+  const f=bit? n("f1"):n("f0");
+  setCWUI(f);
+  await send(`sweep cw ${hz(f)}`);
+}
+$("sendF0").onclick=()=>setTone(0);
+$("sendF1").onclick=()=>setTone(1);
+$("sendFC").onclick=()=>applyCW((n("f0")+n("f1"))/2);
+
+$("runPattern").onclick=async()=>{
+  const p=$("pattern").value.replace(/[^01]/g,"");
+  if(!p){alert("Motif vide.");return;}
+  const dwell=Math.max(120,Math.round(n("bitDwell")));
+  const count=Math.max(1,Math.round(n("bitCount")));
+  patternStop=false;
+  for(let i=0;i<count&&!patternStop;i++){
+    const bit=p[i%p.length]==="1"?1:0;
+    $("patternStatus").textContent=`${i+1}/${count} · ${bit}`;
+    await setTone(bit);
+    await sleep(dwell);
+  }
+  $("patternStatus").textContent=patternStop?"Arrêté.":"Terminé.";
+};
+$("stopPattern").onclick=()=>{patternStop=true;};
+
+$("runCfo").onclick=async()=>{
+  const center=n("cfoCenter"), dwell=Math.max(120,Math.round(n("cfoDwell")));
+  const offsets=$("cfoOffsets").value.split(",").map(s=>Number(s.trim())).filter(Number.isFinite);
+  if(!offsets.length){alert("Offsets invalides.");return;}
+  cfoStop=false;
+  for(let i=0;i<offsets.length&&!cfoStop;i++){
+    const f=center+offsets[i]/1000;
+    $("cfoStatus").textContent=`${i+1}/${offsets.length} · ${offsets[i]>=0?"+":""}${offsets[i]} kHz · ${f.toFixed(6)} MHz`;
+    await applyCW(f);
+    await sleep(dwell);
+  }
+  $("cfoStatus").textContent=cfoStop?"Arrêté.":"Terminé.";
+};
+$("stopCfo").onclick=()=>{cfoStop=true;};
+
+$("probe").onclick=()=>sendMany([
+  "mode ?",
+  "output ?",
+  "freq ?",
+  "level ?",
+  "ext_gain ?",
+  "modulation ?",
+  "sweep ?",
+  "sweeptime ?",
+  "levelchange",
+  "caloutput",
+  "actual_freq",
+  "freq_corr",
+  "status"
+]);
+$("info").onclick=()=>sendMany(["info","version"]);
+$("help").onclick=()=>send("help");
+$("directFreq").onclick=()=>send(`freq ${hz(n("directFreqMHz"))}`);
+$("applyCal").onclick=()=>send(`caloutput ${$("calValue").value}`);
+$("readActualFreq").onclick=()=>send("actual_freq");
+$("readFreqCorr").onclick=()=>send("freq_corr");
+$("savePreset").onclick=()=>send(`save ${$("presetSlot").value}`);
+$("recallPreset").onclick=()=>send(`recall ${$("presetSlot").value}`);
+
+$("sendManual").onclick=async()=>{
+  const c=$("manual").value.trim();if(!c)return;
+  $("manual").value="";
+  await send(c);
+  const lc=c.toLowerCase();
+  if(lc==="output on")setRF(true);
+  if(lc==="output off")setRF(false);
+};
+$("manual").onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();$("sendManual").click();}};
+$("clearLog").onclick=()=>{$("log").value="";};
+$("exportLog").onclick=()=>{
+  const blob=new Blob([$("log").value],{type:"text/plain;charset=utf-8"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download=`tinySA_de12ba2_${new Date().toISOString().replace(/[:.]/g,"-")}.txt`;
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+};
+
+setConnected(false);setRF(false);setCWUI(2412);setPathUI("mixer");setModUI("off");
+if(!("serial" in navigator))log("Web Serial indisponible dans ce navigateur/contexte.\n","APP: ");
+window.addEventListener("beforeunload",()=>{patternStop=cfoStop=true;});
+})();
+</script>
+</body>
+</html>

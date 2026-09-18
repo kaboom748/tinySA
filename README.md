@@ -1,6 +1,6 @@
-
-
 <img width="559" height="337" alt="image" src="https://github.com/user-attachments/assets/b8eda741-8ef2-4bf5-94a5-1f75351f1c2b" />
+<img width="1314" height="882" alt="image" src="https://github.com/user-attachments/assets/fc9510bf-0039-44c6-b3b1-b841917e5c39" />
+
 
 # tinySA Ultra Generator WebSerial
 
